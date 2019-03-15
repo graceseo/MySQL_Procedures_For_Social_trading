@@ -8,25 +8,25 @@ BEGIN
   DECLARE v_job_yyyy date;
   DECLARE v_job_hh char(2);
   
-    # ¸¶Áö¸· ÀÛ¾÷½Ã°£ ¹× ¹øÈ£ È®ÀÎ
+    # ë§ˆì§€ë§‰ ì‘ì—…ì‹œê°„ ë° ë²ˆí˜¸ í™•ì¸
   SELECT last_job_time, last_data_time, last_mat_no, job_done_yn into  v_last_job_time, v_last_data_time, v_last_mat_no, v_job_done_yn
   FROM last_job_time;
 
-   ## job ½ÇÇàµÇ¾ßÇÒ ³¯Â¥¿Í ½Ã°£ ÀúÀå.
+   ## job ì‹¤í–‰ë˜ì•¼í•  ë‚ ì§œì™€ ì‹œê°„ ì €ì¥.
   set v_job_yyyy=date(adddate(v_last_data_time, INTERVAL 1 HOUR));
   set v_job_hh=hour(adddate(v_last_data_time,interval 1 HOUR));
   
 select v_job_yyyy,v_job_hh;
-   # Ã»»ê¸ÅÄª Å×ÀÌºí¿¡¼­ '¸¶Áö¸· ¸ÅÄª¹øÈ£' ÀÌÈÄÀÇ ¹øÈ£¿Í Ã»»êÀÏÀÌ '¸¶Áö¸· µ¥ÀÌÅÍ ½Ã°£'º¸´Ù +1½Ã°£ ÀÎ µ¥ÀÌÅÍ Ã£±â. 
+   # ì²­ì‚°ë§¤ì¹­ í…Œì´ë¸”ì—ì„œ 'ë§ˆì§€ë§‰ ë§¤ì¹­ë²ˆí˜¸' ì´í›„ì˜ ë²ˆí˜¸ì™€ ì²­ì‚°ì¼ì´ 'ë§ˆì§€ë§‰ ë°ì´í„° ì‹œê°„'ë³´ë‹¤ +1ì‹œê°„ ì¸ ë°ì´í„° ì°¾ê¸°. 
   select max(stl_cns_idx) into v_max_mat_no 
   from ent_stl_mat_tbl 
   where stl_cns_idx>v_last_mat_no and ymd=v_job_yyyy and cns_time=v_job_hh;
 
 
-  # Ã»»êµ¥ÀÌÅÍ°¡ ÀÖÀ¸¸é job½ÇÇà 
+  # ì²­ì‚°ë°ì´í„°ê°€ ìˆìœ¼ë©´ jobì‹¤í–‰ 
   if v_max_mat_no is not null then
 
-    ## ´ÜÀ§ÇÁ·Î½ÃÀú È£Ãâ
+    ## Call procedures!!
     call sp_hourly_trader_pro(v_job_yyyy,v_job_hh,v_last_mat_no);
     call sp_hourly_trader_time(v_job_yyyy,v_job_hh,v_last_mat_no);
     call sp_hourly_trader_patt(v_job_yyyy,v_job_hh,v_last_mat_no);
@@ -39,9 +39,9 @@ select v_job_yyyy,v_job_hh;
 
     update last_job_time set last_job_time=curdate(),last_data_time=adddate(v_last_data_time,INTERVAL 1 HOUR),last_mat_no=v_max_mat_no,job_done_yn='Y';
  
- # Ã»»êµ¥ÀÌÅÍ°¡ ¾øÀ¸¸é jobÁ¾·á 
+ # ì²­ì‚°ë°ì´í„°ê°€ ì—†ìœ¼ë©´ jobì¢…ë£Œ 
   elseif v_max_mat_no is null then
-    # ÇØ´çÀÏÀÚ, ÇØ´ç ½Ã°£¿¡ µ¥ÀÌÅÍ°¡ ¾øÀ¸¸é ½Ã°£Àº +1ÇÏ°í  jobÀÇ '¸ÅÄª¹øÈ£'¸¦ ±âÁ¸ÀÇ ¹øÈ£·Î ÀúÀåÇÑ´Ù.
+    # í•´ë‹¹ì¼ì, í•´ë‹¹ ì‹œê°„ì— ë°ì´í„°ê°€ ì—†ìœ¼ë©´ ì‹œê°„ì€ +1í•˜ê³   jobì˜ 'ë§¤ì¹­ë²ˆí˜¸'ë¥¼ ê¸°ì¡´ì˜ ë²ˆí˜¸ë¡œ ì €ì¥í•œë‹¤.
     update last_job_time set last_job_time=curdate(),last_data_time=adddate(v_last_data_time,INTERVAL 1 HOUR),last_mat_no=v_last_mat_no,job_done_yn='Y';  
     
   end if;
